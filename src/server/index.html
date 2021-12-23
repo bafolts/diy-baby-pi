@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0,  user-scalable=no">
+		<title>Baby Pi 1</title>
+<script>
+function startVideo() {
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", "/start-video");
+	xhr.send(document.getElementById('localSessionDescription').value);
+	xhr.onload = function() {
+		document.getElementById("remoteSessionDescription").value = xhr.responseText;
+		window.startSession();
+	}
+}
+function stopVideo() {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", "/stop-video");
+	xhr.send();
+}
+function shutdown() {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", "/shutdown");
+	xhr.send();
+}
+let pc = new RTCPeerConnection({
+  iceServers: [
+    {
+      urls: 'stun:stun.l.google.com:19302'
+    }
+  ]
+})
+let log = msg => {
+  document.getElementById('div').innerHTML += msg + '<br>'
+}
+
+pc.ontrack = function (event) {
+  var el = document.createElement(event.track.kind)
+  el.srcObject = event.streams[0]
+  el.autoplay = true
+  el.controls = true
+  if (event.track.kind === "video") {
+    el.style.width = "100vw";
+    el.style.height = "100vh";
+  }
+  document.getElementById('remoteVideos').appendChild(el);
+  document.getElementById('remoteVideos').style.display = 'block';
+  document.getElementById('stop').style.display = 'block';
+}
+
+pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
+pc.onicecandidate = event => {
+  if (event.candidate === null) {
+    document.getElementById('localSessionDescription').value = btoa(JSON.stringify(pc.localDescription))
+  }
+}
+
+// Offer to receive 1 audio, and 1 video track
+pc.addTransceiver('video', {'direction': 'sendrecv'})
+pc.addTransceiver('audio', {'direction': 'sendrecv'})
+
+pc.createOffer().then(d => pc.setLocalDescription(d)).catch(log)
+
+window.startSession = () => {
+  let sd = document.getElementById('remoteSessionDescription').value
+  if (sd === '') {
+    return alert('Session Description must not be empty')
+  }
+  document.getElementById("start").style.display = "none";
+  try {
+    pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(sd))))
+  } catch (e) {
+    alert(e)
+  }
+}
+
+</script>
+</head>
+<body style="margin:0px">
+  <input id="start" style="display:block;height:100vh;width:100vw" type="button" onclick="startVideo()" value="Start Video" />
+  <textarea style="display:none" id="localSessionDescription" readonly="true"></textarea>
+  <textarea style="display:none" id="remoteSessionDescription"></textarea>
+  <div id="remoteVideos" style="height:100vh;width:100vw"></div>
+  <div id="div" style="display:none"></div>
+  <input id="stop" style="display:none;height:25vh;width:100vw" type="button" onclick="stopVideo()" value="Stop Video" />
+  <input style="height:25vh;width:100vw" type="button" onclick="shutdown()" value="Power off PI" />
+</body>
+</html>
