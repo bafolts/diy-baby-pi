@@ -6,6 +6,15 @@ import (
     "context"
     "fmt"
     "os"
+	"bufio"
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"encoding/json"
+	"io"
+	"io/ioutil"
+	"os"
+	"strings"
 
     "github.com/pion/webrtc/v3"
     "github.com/pion/mediadevices/pkg/codec/opus"
@@ -15,6 +24,101 @@ import (
     _ "github.com/pion/mediadevices/pkg/driver/microphone"
     "github.com/pion/mediadevices/pkg/prop"
 )
+
+// Allows compressing offer/answer to bypass terminal input limits.
+const compress = false
+
+// MustReadStdin blocks until input is received from stdin
+func MustReadStdin() string {
+	r := bufio.NewReader(os.Stdin)
+
+	var in string
+	for {
+		var err error
+		in, err = r.ReadString('\n')
+		if err != io.EOF {
+			if err != nil {
+				panic(err)
+			}
+		}
+		in = strings.TrimSpace(in)
+		if len(in) > 0 {
+			break
+		}
+	}
+
+	fmt.Println("")
+
+	return in
+}
+
+// Encode encodes the input in base64
+// It can optionally zip the input before encoding
+func Encode(obj interface{}) string {
+	b, err := json.Marshal(obj)
+	if err != nil {
+		panic(err)
+	}
+
+	if compress {
+		b = zip(b)
+	}
+
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+// Decode decodes the input from base64
+// It can optionally unzip the input after decoding
+func Decode(in string, obj interface{}) {
+	b, err := base64.StdEncoding.DecodeString(in)
+	if err != nil {
+		panic(err)
+	}
+
+	if compress {
+		b = unzip(b)
+	}
+
+	err = json.Unmarshal(b, obj)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func zip(in []byte) []byte {
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+	_, err := gz.Write(in)
+	if err != nil {
+		panic(err)
+	}
+	err = gz.Flush()
+	if err != nil {
+		panic(err)
+	}
+	err = gz.Close()
+	if err != nil {
+		panic(err)
+	}
+	return b.Bytes()
+}
+
+func unzip(in []byte) []byte {
+	var b bytes.Buffer
+	_, err := b.Write(in)
+	if err != nil {
+		panic(err)
+	}
+	r, err := gzip.NewReader(&b)
+	if err != nil {
+		panic(err)
+	}
+	res, err := ioutil.ReadAll(r)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
 
 func main() {
 
@@ -109,7 +213,7 @@ func main() {
 
     // Wait for the offer to be pasted
     offer := webrtc.SessionDescription{}
-    signal.Decode(signal.MustReadStdin(), &offer)
+    Decode(MustReadStdin(), &offer)
 
     // Set the remote SessionDescription
     if err = peerConnection.SetRemoteDescription(offer); err != nil {
@@ -139,7 +243,7 @@ func main() {
     <-gatherComplete
 
     // Output the answer in base64 so we can paste it in browser
-    fmt.Println(signal.Encode(*peerConnection.LocalDescription()))
+    fmt.Println(Encode(*peerConnection.LocalDescription()))
 
     // Block forever
     select {}
