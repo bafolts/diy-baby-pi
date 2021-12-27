@@ -8,7 +8,6 @@ import (
     "os"
 
     "github.com/pion/webrtc/v3"
-    "github.com/pion/webrtc/v3/examples/internal/signal"
     "github.com/pion/mediadevices/pkg/codec/opus"
     "github.com/pion/mediadevices/pkg/codec/mmal"
     "github.com/pion/mediadevices"
@@ -36,12 +35,10 @@ func main() {
     stream, _ := mediadevices.GetUserMedia(mediadevices.MediaStreamConstraints{
         Audio: func(constraint *mediadevices.MediaTrackConstraints) {
             constraint.ChannelCount = prop.Int(2)
-            // constraint.SampleRate = prop.Int(8000)
         },
         Video: func(constraint *mediadevices.MediaTrackConstraints) {
             constraint.Width = prop.Int(640)
             constraint.Height = prop.Int(480)
-	    // constraint.FrameRate = prop.Float(5)
         },
         Codec: codecSelector,
     })
