@@ -15,26 +15,26 @@ const server = http.createServer(function (req, res) {
     });
 
     req.on("end", function () {
-	if (golang !== undefined) {
-		golang.kill();
+    if (golang !== undefined) {
+      golang.kill();
 	}
-    	golang = child_process.spawn("/home/pi/Projects/webrtc/main", [], {
-		cwd: "/home/pi/Projects/webrtc/",
-	}, function () {
-		console.log("the process finished");
-      	});
-	golang.on("error", function (err) {
-		console.log("there was some error!", err);
-	});
-	golang.stderr.on("data", function (o) {
-		console.log(o.toString());
-	});
-	golang.stdout.on("error", function () {
-		console.log("there was an error");
-	});
-	golang.stdin.on("error", function () {
-		console.log("stdin error");
-	});
+    golang = child_process.spawn("/home/pi/Projects/diy-baby-pi/main", [], {
+      cwd: "/home/pi/Projects/diy-baby-pi/",
+    }, function () {
+      console.log("the process finished");
+    });
+    golang.on("error", function (err) {
+      console.log("there was some error!", err);
+    });
+    golang.stderr.on("data", function (o) {
+      console.log(o.toString());
+    });
+    golang.stdout.on("error", function () {
+      console.log("there was an error");
+    });
+    golang.stdin.on("error", function () {
+      console.log("stdin error");
+    });
 	golang.stdout.on("data", function (o) {
 	    console.log(o.toString());
 	    const p = o.toString();

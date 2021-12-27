@@ -31,6 +31,19 @@ The server page software is included in this repository. For the webrtc capabili
 
 This is started and stopped from the server page. Will add more setup and usage steps later.
 
+### Building
+
+This project assumes it is cloned to `/home/pi/Projects`.
+
+Change to the `/home/pi/Projects/diy-baby-pi/` directory.
+
+```
+go build src/server/webrtc/main.go
+```
+
+This will create binary that the node process starts and stops for webrtc through the server.
+
+
 ## Local HDMI Mode
 
 This mode works directly through HDMI for lowest latency and highest reliability. This is a work in progress and support needs to be added to the server page to allow starting and stopping this stream. With the camera and microphone plugged in and a display available on the HDMI port run the following command while logged in through SSH or from the terminal if access to mouse and keyboard is available. I use this with a 100 foot HDMI cable.
