@@ -27,6 +27,14 @@ The pi and camera can be mounted to the tripod with zip-ties or velcro straps.
 
 The server page software is included in this repository. For the webrtc capabilities the pi runs the [pion/webrtc](https://github.com/pion/webrtc) system utilizing the hardware decoding capabilities of the pi.
 
+```
+sudo apt install hostapd
+```
+
+### Hostapd
+
+Hostapd is used to turn the pi into a wireless access point. This enables connecting to the pi directly versus having to go through another network. The configuration used is found at `src/hostapd.conf`.
+
 ## Remote WebRTC mode
 
 This is started and stopped from the server page. Will add more setup and usage steps later.
